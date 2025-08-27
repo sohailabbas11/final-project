@@ -14,19 +14,41 @@ mongoose.connect(process.env.MONGO_URI || "mongodb://localhost:27017/chat-app")
 .then(() => {console.log("Connected to MongoDB")})
 .catch((err) => {console.log(err)});
 
-    app.post("/messages", async (req, res) => {
-        const text = req.body.text;
-        const message = new Message({
-            text,
-        });
-        await message.save();
-        res.status(201).json(message);
-    });
-
 app.get("/messages", async (req, res) => {
-    const messages = await Message.find();
-    res.json(messages);
-});
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+  
+    const [messages, total] = await Promise.all([
+      Message.find()
+        .sort({ createdAt: -1 }) // newest first
+        .skip(skip)
+        .limit(limit),
+      Message.countDocuments()
+    ]);
+  
+    res.json({
+      messages,
+      total,
+      hasMore: page * limit < total
+    });
+  });
+  
+
+    app.get("/messages", async (req, res) => {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
+    
+        const messages = await Message.find().skip(skip).limit(limit);
+        res.json(messages);
+    });
+    
+
+app.delete("/messages/:id", async (req, res) => {
+    const message = await Message.findByIdAndDelete(req.params.id);
+    res.json(message);
+});     
 
 
 
