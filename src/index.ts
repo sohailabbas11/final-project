@@ -34,17 +34,13 @@ app.get("/messages", async (req, res) => {
     });
   });
   
+  app.post("/messages", async (req, res) => {
+    const message = new Message(req.body);
+    await message.save();
+    res.json(message);
+  });
 
-    app.get("/messages", async (req, res) => {
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 20;
-        const skip = (page - 1) * limit;
     
-        const messages = await Message.find().skip(skip).limit(limit);
-        res.json(messages);
-    });
-    
-
 app.delete("/messages/:id", async (req, res) => {
     const message = await Message.findByIdAndDelete(req.params.id);
     res.json(message);
